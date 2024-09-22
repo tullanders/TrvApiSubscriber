@@ -91,7 +91,7 @@ class PullClient {
         }).then(response => {
             return response.json();
         }).then(data => {
-
+            console.log(data.RESPONSE.RESULT[0]);
             const key = Object.keys(data.RESPONSE.RESULT[0])[0];
             const values = data.RESPONSE.RESULT[0][key].map((x) => x[this.#dateTimeField]);
             values.sort((a, b) => {
@@ -115,7 +115,7 @@ class PullClient {
 
 
         }).catch((error) => {
-            throw new Error('Error:', error);
+            throw new Error('Error: ' + error);
         });
     }
 
@@ -128,6 +128,7 @@ class PullClient {
             filter = result.REQUEST.QUERY[0].FILTER;
             let found = false;
             if (filter) {
+                console.log('filter', filter);
                 filter.forEach(element => {
                     if (element.GT && element.GT[0].$.name === dateTimeField) {
                         element.GT[0].$.value = dateTimeValue;
@@ -141,7 +142,10 @@ class PullClient {
                 }
             }
             else {
+                console.log('no filter');
                 // create gt node with name and value attributes:
+                result.REQUEST.QUERY[0].FILTER = [];
+                filter = result.REQUEST.QUERY[0].FILTER;
                 filter.push({
                     GT: {$: {name: dateTimeField, value: dateTimeValue}}
                 });
@@ -149,6 +153,7 @@ class PullClient {
 
             
             var builder = new xml2js.Builder();
+            console.log(builder.buildObject(result));
             returnXml = builder.buildObject(result);
 
         });
