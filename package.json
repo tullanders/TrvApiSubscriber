@@ -1,0 +1,25 @@
+{
+  "name": "trv-api-subscriber",
+  "version": "0.0.1",
+  "description": "A node.js module that subscribes to API:s at Trafikverket (Swedeish Transport Administration) with SSE or by pulling delta data",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --env-file=.env test.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tullanders/TrvApiSubscriber.git"
+  },
+  "author": "Anders Bergkvist <andersbergkvist@hotmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tullanders/TrvApiSubscriber/issues"
+  },
+  "homepage": "https://github.com/tullanders/TrvApiSubscriber#readme",
+  "dependencies": {
+    "eventsource": "^2.0.2",
+    "jstoxml": "^5.0.2",
+    "xml2js": "^0.6.2"
+  }
+}
