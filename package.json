@@ -1,5 +1,5 @@
 {
-  "name": "trv-api-subscriber",
+  "name": "@tullamore/trv-api-subscriber",
   "version": "0.0.1",
   "description": "A node.js module that subscribes to API:s at Trafikverket (Swedish Transport Administration) with SSE or by pulling delta data",
   "main": "index.js",
