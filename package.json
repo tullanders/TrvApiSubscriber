@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/tullanders/TrvApiSubscriber.git"
   },
-  "author": "Anders Bergkvist <andersbergkvist@hotmail.com",
+  "author": "Anders Bergkvist <andersbergkvist@hotmail.com>",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/tullanders/TrvApiSubscriber/issues"

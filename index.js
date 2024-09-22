@@ -83,7 +83,7 @@ class PullClient {
         if (this.#customHeaders) {
             Object.assign(headers, this.#customHeaders);
         }
-        console.log('Fetching data', xmlQuery);
+
         fetch(this.#url, {
             method: 'POST',
             body: xmlQuery,
@@ -101,12 +101,10 @@ class PullClient {
             // Om vi inte har någon data så kör vi samma xml igen:
             let xml;
             if (values.length === 0) {
-                console.log('No data');
                 xml = xmlQuery;
             }
             else {
                 const dateTimeValue = values[0];
-                console.log('Data:', dateTimeValue);
                 xml = this.#modifyXml(this.#queryXML, this.#dateTimeField, dateTimeValue);
                 this.#callback(data.RESPONSE.RESULT[0]);
             }
@@ -117,7 +115,7 @@ class PullClient {
 
 
         }).catch((error) => {
-            console.error('Error:', error);
+            throw new Error('Error:', error);
         });
     }
 
@@ -128,7 +126,6 @@ class PullClient {
             let QUERY = result.REQUEST.QUERY[0];
             let filter;
             filter = result.REQUEST.QUERY[0].FILTER;
-            console.log('Filter:', filter);
             let found = false;
             if (filter) {
                 filter.forEach(element => {

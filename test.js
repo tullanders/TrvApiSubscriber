@@ -17,5 +17,5 @@ const xmlQuery = `<REQUEST>
 //});
 
 const pullClient = new PullClient(url, xmlQuery, 'TimeAtLocation', 5000, (data) => {
-//    console.log(data);
+    console.log(data);
 });
