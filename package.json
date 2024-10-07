@@ -16,10 +16,5 @@
   "bugs": {
     "url": "https://github.com/tullanders/TrvApiSubscriber/issues"
   },
-  "homepage": "https://github.com/tullanders/TrvApiSubscriber#readme",
-  "dependencies": {
-    "eventsource": "^2.0.2",
-    "jstoxml": "^5.0.2",
-    "xml2js": "^0.6.2"
-  }
+  "homepage": "https://github.com/tullanders/TrvApiSubscriber#readme"
 }

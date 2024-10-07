@@ -1,4 +1,4 @@
-const {SseClient, PullClient} = require('./index');
+const {SseClient} = require('./index');
 const openApiUrl = process.env.TRV_OPEN_API_URL;
 const apimUrl = process.env.APIM_API_URL;
 const openApiKey = process.env.TRV_OPEN_API_KEY;
@@ -17,23 +17,21 @@ const trimQuery = `<REQUEST>
 </REQUEST> 
 `;    
 const currentDateTimeIso = new Date().toISOString();
-console.log(currentDateTimeIso);
 const tposQuery = `<REQUEST>
 <LOGIN authenticationkey="${openApiKey}"/>
   <QUERY objecttype="TrainPosition" namespace="järnväg.trafikinfo" schemaversion="1.1" sseurl="true">
     <FILTER>
       <GT name="TimeStamp" value="${currentDateTimeIso}"/>    
     </FILTER>
+    
   </QUERY>
 </REQUEST>
 `;
 
 let count = 0;
-const client = new SseClient(openApiUrl, tposQuery, (data) => {
-    console.log(data.TrainPosition.length, new Date().getMinutes() + ':' + new Date().getSeconds());
+const currentTime = Date.now();
+new SseClient(openApiUrl, tposQuery, (data) => {
+    console.log(data.TrainPosition.length, (Date.now()-currentTime)/1000);
 });
 
-/*const pullClient = new PullClient(apimUrl, trimQuery, 'TrainLocationReport.LocationDateTime', 5000, (data)  => {
-    console.log(data);
-  },{'Ocp-Apim-Subscription-Key': process.env.APIM_API_KEY}
-);*/
+

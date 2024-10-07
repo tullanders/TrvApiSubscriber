@@ -1,167 +1,79 @@
-const EventSource = require('eventsource');
-const xml2js = require('xml2js');
-const toXML = require('jstoxml');
+const https = require('https');
 class SseClient {
     #bearer;
-  constructor(url, xmlQuery, callback, customHeaders) 
-  {
+    constructor (url, xmlQuery, callback, customHeaders) {
 
-    let bearer;
-    let sseurl;
-    const headers = {
-        "Content-Type": "application/xml"
-    };
-
-    if (customHeaders) {
-        Object.assign(headers, customHeaders);
-    }
-
-    fetch(url, {
-        method: 'POST',
-        body: xmlQuery,
-        headers: headers
-    }).then(response => {
-        // test if we have a bearer token
-        bearer = response.headers.get('x-auth-token');
-        return response.json();
-    }).then(data => {
-        const sseurl = data.RESPONSE.RESULT[0].INFO.SSEURL;
-    
-        callback(data.RESPONSE.RESULT[0]);
-        
-        // Create a new EventSource
-        const sseHeader = {
-            headers: {}
-                
-        };
-        if (bearer) {
-            sseHeader.headers.Authorization = bearer;
-        }
-        var es = new EventSource(sseurl, sseHeader);
-        es.onerror = (event) => {
-            console.log('error', event);
-        };
-        es.onmessage = (event) => {
-            callback(JSON.parse(event.data).RESPONSE.RESULT[0]);
-        };
-
-        
-    }).catch((error) => {
-        console.error('Error:', error);
-    });   
-    
-  }
-  
-} 
-
-class PullClient {
-    #queryXML;
-    #callback;
-    #url;
-    #interval;
-    #customHeaders;
-    #dateTimeField;
-    constructor (url, xmlQuery, dateTimeField, interval, callback, customHeaders) {
-        let datetime = new Date();
-        // remove milliseconds datetime (specified in inteval)
-        datetime.getTime(datetime.getTime() - datetime.getTime() % interval);
-        // convert datetime to string
-        const dateTimeValue = datetime.toISOString();
-        this.#dateTimeField = dateTimeField;
-        this.#queryXML = xmlQuery;
-        this.#callback = callback;
-        this.#url = url;
-        this.#customHeaders = customHeaders;
-    
-        this.#fetchData(this.#modifyXml(xmlQuery, dateTimeField, dateTimeValue), dateTimeField);
-    }
-
-    #fetchData = (xmlQuery) => {
-        const headers = {
-            "Content-Type": "application/xml"
-        };
-        if (this.#customHeaders) {
-            Object.assign(headers, this.#customHeaders);
-        }
-
-        fetch(this.#url, {
+        // Make a POST request to the TRV API
+        fetch(url, {
             method: 'POST',
             body: xmlQuery,
-            headers: headers
+            headers: customHeaders
         }).then(response => {
+            // test if we have a bearer token
+            this.#bearer = response.headers.get('x-auth-token');
             return response.json();
         }).then(data => {
-            const key = Object.keys(data.RESPONSE.RESULT[0])[0];
-            console.log(95, key);
-            // build
-            const values = data.RESPONSE.RESULT[0][key].map((x) => x[this.#dateTimeField]);
-            console.log(97, values);
-            values.sort((a, b) => {
-                return b - a;
-            });
-
-            // Om vi inte har någon data så kör vi samma xml igen:
-            let xml;
-            if (values.length === 0) {
-                xml = xmlQuery;
+            if (!data.RESPONSE.RESULT[0].INFO && !data.RESPONSE.RESULT[0].INFO.SSEURL) {
+                throw new Error('No SSE URL found in the response');
             }
-            else {
-                const dateTimeValue = values[0];
-                xml = this.#modifyXml(this.#queryXML, this.#dateTimeField, dateTimeValue);
-                this.#callback(data.RESPONSE.RESULT[0]);
-            }
-
-            setTimeout(() => {
-                this.#fetchData(xml)
-            }, 20000);
-
-
-        }).catch((error) => {
-            throw new Error('Error: ' + error);
-        });
-    }
-
-    #modifyXml = (xml, dateTimeField, dateTimeValue) => {
-        console.log(dateTimeField, dateTimeValue);
-        let returnXml;
-        xml2js.parseString(xml, (err, result) => {
-            if (err) throw err;
-            let QUERY = result.REQUEST.QUERY[0];
-            let filter;
-            filter = result.REQUEST.QUERY[0].FILTER;
-            let found = false;
-            if (filter) {
-                filter.forEach(element => {
-                    if (element.GT && element.GT[0].$.name === dateTimeField) {
-                        element.GT[0].$.value = dateTimeValue;
-                        found = true;
-                    }
-                });
-                if (!found) {
-                    filter.push({
-                        GT: {$: {name: dateTimeField, value: dateTimeValue}}
-                    });
-                }
-            }
-            else {
-                // create gt node with name and value attributes:
-                result.REQUEST.QUERY[0].FILTER = [];
-                filter = result.REQUEST.QUERY[0].FILTER;
-                filter.push({
-                    GT: {$: {name: dateTimeField, value: dateTimeValue}}
-                });
-            }
-
+            const sseurl = data.RESPONSE.RESULT[0].INFO.SSEURL;
+        
+            callback(data.RESPONSE.RESULT[0]);
             
-            var builder = new xml2js.Builder();
-            returnXml = builder.buildObject(result);
+            // Create a new EventSource
+            const sseHeader = {
+                headers: {}
+                    
+            };
+            if (this.#bearer) {
+                sseHeader.headers.Authorization = this.#bearer;
+            }
+            https.get(sseurl, sseHeader, (response) => {
 
-        });
-        return returnXml;
-    }
+                // Check if the content type is 'text/event-stream'
+                if (response.headers['content-type'].includes('text/event-stream')) {
+                    
+                    let eventBuffer = '';  // Buffer to collect chunks for each event
+
+                    response.on('data', (chunk) => {
+                        if (chunk.toString().startsWith('id:')) {
+                            // Split the buffer into individual events
+                            const events = eventBuffer.split('data: ');
+                             if (events.length > 1) {
+                                try {
+                                    // Parse each event as JSON
+                                    const json = JSON.parse(events[1]);
+                                    // Call the callback function with the parsed events
+                                    callback(json.RESPONSE.RESULT[0]);
+                                }
+                                catch (error) {
+                                    console.error('Error parsing JSON:', error);
+                                }
+                             }
+                            eventBuffer = '';
+                            eventBuffer = chunk.toString();
+                        }
+                        else {
+                            eventBuffer += chunk.toString();
+                        }
+                        
+                    });
+              
+                  response.on('end', () => {
+                    console.log('SSE stream ended');
+                  });
+                } else {
+                  console.error('The response is not an SSE stream');
+                }
+              }).on('error', (error) => {
+                console.error('Error connecting to SSE source:', error);
+              });               
     
+        }).catch((error) => {
+            console.error('Error:', error);
+        });                
+    }    
 }
 module.exports = {
-    SseClient,
-    PullClient
+    SseClient
 };
