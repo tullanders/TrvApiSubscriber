@@ -1,7 +1,12 @@
 # trv-api-subscriber
-The Swedish Transport Administration provides an open API for trainrunning data (and road realated data). If attribute ```sseurl="true"``` is added to the query tag, the API response will include an url for subscribing to new events through server send events (SSE).
+The Swedish Transport Administration (Trafikverket, or just TRV) provides an open API for trainrunning data (and road realated data). If attribute ```sseurl="true"``` is added to the query tag, the API response will include an url for subscribing to new events through server send events (SSE).
 
-Example usage:
+[Get your own key here](https://data.trafikverket.se/home)
+
+## Support for API JVG (B2B endpoint)
+This plugin supports TRV´s B2B-endpoints. You can define custom headers as arguments. The bearer-token from first request is forwarded in the request to the SSE-endpoint.
+
+## Example usage:
 
 ```
 // reference to module
