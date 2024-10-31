@@ -29,6 +29,13 @@ class SseClient {
                 sseHeader.headers.Authorization = this.#bearer;
             }
             https.get(sseurl, sseHeader, (response) => {
+                response.on('error', (error) => {
+                    console.error('Error reading the SSE stream:', error);
+                });
+
+                response.on('close', () => {
+                    console.error('SSE stream closed');
+                });
 
                 // Check if the content type is 'text/event-stream'
                 if (response.headers['content-type'].includes('text/event-stream')) {
@@ -60,7 +67,7 @@ class SseClient {
                     });
               
                   response.on('end', () => {
-                    console.log('SSE stream ended');
+                    console.info('SSE stream ended');
                   });
                 } else {
                   console.error('The response is not an SSE stream');
